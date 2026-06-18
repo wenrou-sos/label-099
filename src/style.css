@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-sans text-ink-900 bg-cream-50;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    @apply bg-primary-200 text-primary-900;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-100 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-300;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 h-11 rounded-xl font-medium
+           transition-all duration-200 ease-out cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
+           whitespace-nowrap select-none;
+  }
+  .btn-primary {
+    @apply btn text-white bg-gradient-primary shadow-primary
+           hover:-translate-y-0.5 hover:shadow-primary-hover;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-primary-500 border border-primary-200
+           hover:bg-primary-50 hover:border-primary-300;
+  }
+  .btn-ghost {
+    @apply btn text-ink-700 bg-transparent hover:bg-ink-50;
+  }
+  .btn-lavender {
+    @apply btn text-white bg-gradient-lavender;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-card transition-all duration-200;
+  }
+  .card-hover {
+    @apply card hover:-translate-y-1 hover:shadow-card-hover;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-caption;
+  }
+  .chip-primary {
+    @apply chip bg-primary-50 text-primary-600;
+  }
+  .chip-mint {
+    @apply chip bg-mint-100 text-mint-700;
+  }
+  .chip-lavender {
+    @apply chip bg-lavender-100 text-lavender-700;
+  }
+  .chip-gray {
+    @apply chip bg-ink-50 text-ink-500;
+  }
+
+  .input-base {
+    @apply w-full h-12 px-4 rounded-xl border border-ink-100 bg-white text-body
+           outline-none transition-all duration-200
+           focus:border-primary-400 focus:ring-4 focus:ring-primary-100;
+  }
+  .textarea-base {
+    @apply w-full px-4 py-3 rounded-xl border border-ink-100 bg-white text-body
+           outline-none transition-all duration-200 resize-none
+           focus:border-primary-400 focus:ring-4 focus:ring-primary-100;
+  }
+
+  .nav-link {
+    @apply relative px-4 py-2 text-ink-700 font-medium transition-colors duration-200
+           hover:text-primary-500;
+  }
+  .nav-link-active {
+    @apply nav-link text-primary-500;
+  }
+  .nav-link-active::after {
+    content: "";
+    @apply absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-primary rounded-full;
+  }
+
+  .section-title {
+    @apply flex items-center justify-between mb-6;
+  }
+  .section-title h2 {
+    @apply text-heading-2 text-ink-900;
+  }
+  .section-title a {
+    @apply text-primary-500 font-medium hover:text-primary-600 transition-colors;
+  }
+
+  .condition-badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-caption font-semibold;
+  }
+  .condition-new {
+    @apply condition-badge bg-mint-100 text-mint-700;
+  }
+  .condition-like-new {
+    @apply condition-badge bg-blue-50 text-blue-600;
+  }
+  .condition-light {
+    @apply condition-badge bg-orange-50 text-orange-600;
+  }
+  .condition-heavy {
+    @apply condition-badge bg-ink-100 text-ink-500;
+  }
+
+  .price-tag {
+    @apply text-primary-600 font-bold;
+  }
+  .price-origin {
+    @apply text-ink-300 line-through text-caption;
+  }
+
+  .trusted-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-[10px] font-bold;
+  }
+
+  .credit-ring {
+    background: conic-gradient(#FF6B8A var(--progress, 0%), #DFE6E9 var(--progress, 0%));
+  }
+
+  .stagger > * {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.3s; }
+  .stagger > *:nth-child(7) { animation-delay: 0.35s; }
+  .stagger > *:nth-child(8) { animation-delay: 0.4s; }
+  .stagger > *:nth-child(9) { animation-delay: 0.45s; }
+  .stagger > *:nth-child(10) { animation-delay: 0.5s; }
+  .stagger > *:nth-child(11) { animation-delay: 0.55s; }
+  .stagger > *:nth-child(12) { animation-delay: 0.6s; }
+}
+
+@layer utilities {
+  .mask-blur-bottom {
+    mask-image: linear-gradient(180deg, #000 0%, #000 30%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 30%, transparent 100%);
+  }
+}
