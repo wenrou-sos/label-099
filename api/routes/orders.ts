@@ -58,4 +58,14 @@ router.put('/:id/status', authGuard, async (req: Request, res: Response) => {
   )
 })
 
+router.delete('/:id', authGuard, async (req: Request, res: Response) => {
+  await handle(res, () =>
+    OrderService.delete(Number(req.params.id), req.user!.id, req.user!.role)
+  )
+})
+
+router.get('/stats/count', authGuard, async (req: Request, res: Response) => {
+  await handle(res, () => OrderService.getStats(req.user!.id))
+})
+
 export default router

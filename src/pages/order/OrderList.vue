@@ -8,8 +8,11 @@ import {
   NAvatar,
   NIcon,
   NTag,
+  NBadge,
   useMessage,
   NEmpty,
+  NPagination,
+  useDialog,
 } from 'naive-ui'
 import {
   ShoppingBag,
@@ -23,31 +26,45 @@ import {
   ChevronRight,
   RotateCcw,
   Trash2,
+  XCircle,
+  Undo2,
 } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
-import { getOrderList, payOrder } from '@/api/order'
-import type { Order, OrderStatus, ProductCondition } from '../../../shared/types'
+import { getOrderList, getOrderStats, deleteOrder, cancelOrder, payOrder, receiveOrder } from '@/api/order'
+import type { Order, OrderStatus, ProductCondition, OrderStats } from '../../../shared/types'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
+const dialog = useDialog()
 const userStore = useUserStore()
 
 const loading = ref(true)
 const orders = ref<Order[]>([])
 const total = ref(0)
+const page = ref(1)
+const pageSize = 10
 const activeTab = ref('all')
 const actionLoading = ref<Record<number, boolean>>({})
+const stats = ref<OrderStats | null>(null)
 
 const tabConfig = [
-  { value: 'all', label: '全部', icon: ShoppingBag },
-  { value: 'pending_payment', label: '待付款', icon: Banknote },
-  { value: 'paid', label: '待发货', icon: Send },
-  { value: 'shipped', label: '待收货', icon: Package },
-  { value: 'delivered', label: '待评价', icon: StarHalf },
-  { value: 'completed', label: '已完成', icon: CheckCircle2 },
+  { value: 'all', label: '全部', icon: ShoppingBag, badge: null as null | number },
+  { value: 'pending_payment', label: '待付款', icon: Banknote, badge: null as null | number },
+  { value: 'paid', label: '待发货', icon: Send, badge: null as null | number },
+  { value: 'shipped', label: '待收货', icon: Package, badge: null as null | number },
+  { value: 'delivered', label: '待评价', icon: StarHalf, badge: null as null | number },
+  { value: 'completed', label: '已完成', icon: CheckCircle2, badge: null as null | number },
+  { value: 'cancelled', label: '已取消', icon: XCircle, badge: null as null | number },
+  { value: 'refunded', label: '已退款', icon: Undo2, badge: null as null | number },
 ]
+
+function getBadgeCount(tabValue: string): number | null {
+  if (!stats.value) return null
+  if (tabValue === 'all') return stats.value.total
+  return (stats.value as any)[tabValue] ?? null
+}
 
 const statusInfo: Record<OrderStatus, { label: string; class: string; icon: string }> = {
   pending_payment: { label: '待付款', class: 'bg-orange-100 text-orange-600', icon: '💰' },
@@ -76,7 +93,7 @@ const conditionTextMap: Record<ProductCondition, string> = {
 async function fetchOrders() {
   loading.value = true
   try {
-    const params: any = { page: 1, pageSize: 50 }
+    const params: any = { page: page.value, pageSize }
     if (activeTab.value !== 'all') {
       params.status = activeTab.value
     }
@@ -85,10 +102,36 @@ async function fetchOrders() {
     total.value = res.total || 0
   } catch {
     orders.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
 }
+
+async function fetchStats() {
+  try {
+    stats.value = await getOrderStats()
+  } catch {
+    stats.value = null
+  }
+}
+
+function refreshAll() {
+  fetchOrders()
+  fetchStats()
+}
+
+function handlePageChange(p: number) {
+  page.value = p
+  fetchOrders()
+}
+
+watch(activeTab, () => {
+  page.value = 1
+  fetchOrders()
+})
+
+onMounted(refreshAll)
 
 function isBuyer(order: Order) {
   return userStore.userInfo?.id === order.buyerId
@@ -108,9 +151,24 @@ async function handlePay(order: Order) {
 }
 
 function handleCancel(order: Order) {
-  if (window.confirm('确定要取消这个订单吗？')) {
-    message.info('取消功能开发中')
-  }
+  dialog.warning({
+    title: '确认取消订单？',
+    content: '取消后订单将无法恢复，是否继续？',
+    positiveText: '确认取消',
+    negativeText: '再想想',
+    onPositiveClick: async () => {
+      actionLoading.value[order.id] = true
+      try {
+        await cancelOrder(order.id)
+        message.success('订单已取消')
+        refreshAll()
+      } catch (e: any) {
+        message.error(e?.message || '取消失败')
+      } finally {
+        actionLoading.value[order.id] = false
+      }
+    },
+  })
 }
 
 function handleRemindShip(order: Order) {
@@ -118,10 +176,24 @@ function handleRemindShip(order: Order) {
 }
 
 function handleReceive(order: Order) {
-  if (window.confirm('确认已收到商品？')) {
-    message.success('确认收货成功，请去评价～')
-    order.status = 'delivered'
-  }
+  dialog.warning({
+    title: '确认已收到商品？',
+    content: '确认收货后将完成交易，请确保已检查商品无误。',
+    positiveText: '确认收货',
+    negativeText: '再等等',
+    onPositiveClick: async () => {
+      actionLoading.value[order.id] = true
+      try {
+        await receiveOrder(order.id)
+        message.success('确认收货成功，请去评价～')
+        refreshAll()
+      } catch (e: any) {
+        message.error(e?.message || '操作失败')
+      } finally {
+        actionLoading.value[order.id] = false
+      }
+    },
+  })
 }
 
 function handleReview(order: Order) {
@@ -135,18 +207,29 @@ function handleRebuy(order: Order) {
 }
 
 function handleDelete(order: Order) {
-  if (window.confirm('确定要删除这个订单记录吗？')) {
-    orders.value = orders.value.filter(o => o.id !== order.id)
-    message.success('已删除')
-  }
+  dialog.warning({
+    title: '确认删除订单？',
+    content: '删除后订单记录将无法恢复，是否继续？',
+    positiveText: '确认删除',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      actionLoading.value[order.id] = true
+      try {
+        await deleteOrder(order.id)
+        message.success('已删除')
+        refreshAll()
+      } catch (e: any) {
+        message.error(e?.message || '删除失败')
+      } finally {
+        actionLoading.value[order.id] = false
+      }
+    },
+  })
 }
 
 function goDetail(order: Order) {
   router.push(`/orders/${order.id}`)
 }
-
-watch(activeTab, fetchOrders)
-onMounted(fetchOrders)
 </script>
 
 <template>
@@ -181,6 +264,12 @@ onMounted(fetchOrders)
               <div class="flex items-center gap-2 py-2">
                 <NIcon :size="16"><component :is="tab.icon" /></NIcon>
                 <span>{{ tab.label }}</span>
+                <span
+                  v-if="getBadgeCount(tab.value) !== null && getBadgeCount(tab.value)! > 0"
+                  class="text-xs text-ink-500 font-medium"
+                >
+                  ({{ getBadgeCount(tab.value) }})
+                </span>
               </div>
             </template>
           </NTabPane>
@@ -347,6 +436,16 @@ onMounted(fetchOrders)
                     </NButton>
                   </template>
 
+                  <template v-else-if="order.status === 'cancelled' || order.status === 'refunded'">
+                    <NButton size="small" secondary @click="goDetail(order)">
+                      查看详情
+                    </NButton>
+                    <NButton size="small" @click="handleDelete(order)">
+                      <NIcon :size="14"><Trash2 /></NIcon>
+                      删除
+                    </NButton>
+                  </template>
+
                   <template v-else>
                     <NButton size="small" secondary @click="goDetail(order)">
                       查看详情
@@ -355,6 +454,16 @@ onMounted(fetchOrders)
                 </div>
               </div>
             </div>
+          </div>
+
+          <div v-if="!loading && total > pageSize" class="mt-8 flex justify-center">
+            <NPagination
+              :page="page"
+              :page-size="pageSize"
+              :item-count="total"
+              :page-slot="5"
+              @update:page="handlePageChange"
+            />
           </div>
         </div>
       </div>

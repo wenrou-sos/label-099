@@ -304,3 +304,14 @@ export interface CreateAnswerParams {
   content: string
   images?: string[]
 }
+
+export interface OrderStats {
+  total: number
+  pending_payment: number
+  paid: number
+  shipped: number
+  delivered: number
+  completed: number
+  cancelled: number
+  refunded: number
+}

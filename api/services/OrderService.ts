@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { Order, Product, User } from '../models/index.js'
+import { sequelize } from '../config/database.js'
 
 const createOrderSchema = z.object({
   productId: z.number(),
@@ -205,6 +206,71 @@ export class OrderService {
     }
 
     return order
+  }
+
+  static async getStats(userId: number) {
+    const { Op } = await import('sequelize')
+
+    const where = {
+      [Op.or]: [{ buyerId: userId }, { sellerId: userId }],
+    }
+
+    const all = await Order.count({ where })
+
+    const statusList = await Order.findAll({
+      where,
+      attributes: [
+        'status',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+      ] as any,
+      group: ['status'],
+      raw: true,
+    })
+
+    const counts: Record<string, number> = {
+      pending: 0,
+      paid: 0,
+      shipped: 0,
+      completed: 0,
+      cancelled: 0,
+      refunded: 0,
+    }
+
+    for (const row of statusList as any[]) {
+      counts[row.status] = Number(row.count)
+    }
+
+    return {
+      total: all,
+      pending: counts.pending,
+      paid: counts.paid,
+      shipped: counts.shipped,
+      completed: counts.completed,
+      cancelled: counts.cancelled,
+      refunded: counts.refunded,
+    }
+  }
+
+  static async delete(orderId: number, userId: number, role?: string) {
+    const order = await Order.findByPk(orderId)
+    if (!order) {
+      throw new Error('订单不存在')
+    }
+
+    const isBuyer = order.buyerId === userId
+    const isSeller = order.sellerId === userId
+    const isAdmin = role === 'admin'
+
+    if (!isBuyer && !isSeller && !isAdmin) {
+      throw new Error('无权限删除此订单')
+    }
+
+    if (!['completed', 'cancelled', 'refunded'].includes(order.status)) {
+      throw new Error('只能删除已完成、已取消或已退款的订单')
+    }
+
+    await order.destroy()
+    return { success: true }
   }
 
   static async updateStatus(orderId: number, userId: number, data: z.infer<typeof updateOrderStatusSchema>, role?: string) {
