@@ -88,6 +88,30 @@ export async function seed(): Promise<void> {
       points: 3600,
       level: 4,
     },
+    {
+      username: 'admin',
+      email: 'admin@momcare.com',
+      password: hashedPassword,
+      nickname: '平台管理员',
+      role: 'admin' as const,
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
+      phone: '13800000000',
+      bio: 'MomCare 社区平台管理员，负责社区运营与内容审核。',
+      points: 20000,
+      level: 10,
+    },
+    {
+      username: 'moderator',
+      email: 'moderator@momcare.com',
+      password: hashedPassword,
+      nickname: '社区版主',
+      role: 'moderator' as const,
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=moderator',
+      phone: '13800000006',
+      bio: 'MomCare 社区版主，负责帖子质量审核与精华标记。',
+      points: 12000,
+      level: 9,
+    },
   ]
 
   const users: User[] = []
@@ -159,6 +183,7 @@ export async function seed(): Promise<void> {
       viewCount: 15678,
       isPinned: true,
       isHot: true,
+      isEssence: true,
     },
     {
       userId: users[4].id,
@@ -190,6 +215,7 @@ export async function seed(): Promise<void> {
       favoriteCount: 567,
       viewCount: 6789,
       isHot: true,
+      isEssence: true,
     },
     {
       userId: users[3].id,
@@ -750,8 +776,9 @@ export async function seed(): Promise<void> {
   console.log('[Seed] Database seeding completed successfully!')
   console.log(`[Seed] Test accounts created (password: ${DEFAULT_PASSWORD}):`)
   users.forEach(u => {
-    console.log(`  - ${u.nickname}: ${u.username} / ${u.email}`)
+    console.log(`  - ${u.nickname}（${u.role}）: ${u.username} / ${u.email}`)
   })
+  console.log('[Seed] 管理员/版主账号：admin / moderator（密码均为 123456），可在帖子详情页标记精华')
 }
 
 export default seed
