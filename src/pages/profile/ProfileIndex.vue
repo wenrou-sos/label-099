@@ -53,7 +53,7 @@ const menuGroups: { icon: any; label: string; route?: string; badge?: number | s
     { icon: HelpCircle, label: '我的提问', route: '/qa', badge: 8, color: 'from-fuchsia-400 to-pink-500' },
     { icon: Sparkles, label: '我的回答', route: '/qa', badge: 0, color: 'from-teal-400 to-emerald-500' },
     { icon: Heart, label: '我的收藏', badge: 56, color: 'from-red-400 to-rose-500' },
-    { icon: Footprints, label: '我的足迹', badge: 128, color: 'from-indigo-400 to-purple-500' },
+    { icon: Footprints, label: '我的足迹', route: '/profile/footprints', badge: 128, color: 'from-indigo-400 to-purple-500' },
   ],
   [
     { icon: Wallet, label: '我的钱包', badge: '¥528', color: 'from-green-400 to-emerald-500' },

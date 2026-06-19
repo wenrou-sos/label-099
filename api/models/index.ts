@@ -10,6 +10,7 @@ import Watch from './Watch.js'
 import Notification from './Notification.js'
 import Favorite from './Favorite.js'
 import Like from './Like.js'
+import Footprint from './Footprint.js'
 
 User.hasOne(Expert, {
   foreignKey: 'userId',
@@ -241,6 +242,28 @@ User.hasMany(Like, {
   onDelete: 'CASCADE',
 })
 
+User.hasMany(Footprint, {
+  foreignKey: 'userId',
+  as: 'footprints',
+  onDelete: 'CASCADE',
+})
+
+Footprint.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+})
+
+Footprint.belongsTo(Product, {
+  foreignKey: 'productId',
+  as: 'product',
+})
+
+Product.hasMany(Footprint, {
+  foreignKey: 'productId',
+  as: 'footprints',
+  onDelete: 'CASCADE',
+})
+
 export {
   User,
   Expert,
@@ -254,4 +277,5 @@ export {
   Notification,
   Favorite,
   Like,
+  Footprint,
 }

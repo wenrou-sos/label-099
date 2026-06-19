@@ -117,6 +117,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '账号设置', requireAuth: true },
   },
   {
+    path: '/profile/footprints',
+    name: 'profile-footprints',
+    component: () => import('@/pages/profile/ProfileFootprints.vue'),
+    meta: { title: '我的足迹', requireAuth: true },
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/pages/Login.vue'),

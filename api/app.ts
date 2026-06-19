@@ -16,6 +16,7 @@ import ordersRoutes from './routes/orders.js'
 import reviewsRoutes from './routes/reviews.js'
 import qaRoutes from './routes/qa.js'
 import notificationsRoutes from './routes/notifications.js'
+import footprintsRoutes from './routes/footprints.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -36,6 +37,7 @@ app.use('/api/orders', ordersRoutes)
 app.use('/api/reviews', reviewsRoutes)
 app.use('/api/qa', qaRoutes)
 app.use('/api/notifications', notificationsRoutes)
+app.use('/api/footprints', footprintsRoutes)
 
 app.use(
   '/api/health',

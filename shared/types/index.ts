@@ -203,6 +203,14 @@ export interface Favorite {
   createdAt: string
 }
 
+export interface Footprint {
+  id: number
+  userId: number
+  productId: number
+  product?: Product
+  viewedAt: string
+}
+
 export interface PaginationParams {
   page: number
   pageSize: number

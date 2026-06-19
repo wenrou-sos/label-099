@@ -26,6 +26,7 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import { getProduct, favoriteProduct, createProduct } from '@/api/product'
 import { createOrder } from '@/api/order'
+import { addFootprint } from '@/api/footprint'
 import type { Product, ProductCategory, ProductCondition } from '../../../shared/types'
 import { useUserStore } from '@/stores/user'
 
@@ -113,6 +114,9 @@ async function fetchProduct() {
     const id = Number(route.params.id)
     product.value = await getProduct(id)
     favorited.value = product.value.isFavorited ?? false
+    if (userStore.isLoggedIn && product.value) {
+      addFootprint(product.value.id).catch(() => {})
+    }
   } catch (e: any) {
     message.error(e?.message || '加载商品失败')
   } finally {
