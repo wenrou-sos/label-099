@@ -139,7 +139,7 @@ const isBuyer = computed(() => userStore.userInfo?.id === order.value?.buyerId)
 const shippingFee = computed(() => 0)
 const discountAmount = computed(() => {
   if (!order.value?.product) return 0
-  return order.value.product.originalPrice - order.value.amount
+  return order.value.product.originalPrice - order.value.price
 })
 
 const logisticsTrack = [
@@ -396,7 +396,7 @@ onMounted(fetchOrder)
                   </div>
                 </div>
                 <div class="text-right py-1 flex-shrink-0">
-                  <div class="price-tag text-2xl mb-1">¥{{ order.amount }}</div>
+                  <div class="price-tag text-2xl mb-1">¥{{ order.price }}</div>
                   <div class="text-caption text-ink-400">x1</div>
                 </div>
               </div>
@@ -574,7 +574,7 @@ onMounted(fetchOrder)
               <div class="space-y-3">
                 <div class="flex justify-between items-center py-2 border-b border-ink-50">
                   <span class="text-caption text-ink-500">商品金额</span>
-                  <span class="text-body text-ink-700">¥{{ order.product?.originalPrice || order.amount }}</span>
+                  <span class="text-body text-ink-700">¥{{ order.product?.originalPrice || order.price }}</span>
                 </div>
                 <div class="flex justify-between items-center py-2 border-b border-ink-50">
                   <span class="text-caption text-ink-500">运费</span>
@@ -588,7 +588,7 @@ onMounted(fetchOrder)
                 </div>
                 <div class="flex justify-between items-center pt-3">
                   <span class="text-body text-ink-900 font-medium">实付金额</span>
-                  <span class="price-tag text-2xl">¥{{ order.amount }}</span>
+                  <span class="price-tag text-2xl">¥{{ order.price }}</span>
                 </div>
               </div>
             </div>
@@ -621,7 +621,7 @@ onMounted(fetchOrder)
               @click="handlePay"
             >
               <NIcon :size="18"><Banknote /></NIcon>
-              立即付款 ¥{{ order.amount }}
+              立即付款 ¥{{ order.price }}
             </NButton>
           </template>
 

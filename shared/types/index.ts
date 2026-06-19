@@ -109,7 +109,7 @@ export interface Order {
   seller?: User
   productId: number
   product?: Product
-  amount: number
+  price: number
   status: OrderStatus
   address?: string
   phone?: string

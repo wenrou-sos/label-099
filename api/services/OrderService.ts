@@ -10,7 +10,7 @@ const createOrderSchema = z.object({
 })
 
 const updateOrderStatusSchema = z.object({
-  status: z.enum(['paid', 'shipped', 'completed', 'cancelled', 'refunded']),
+  status: z.enum(['paid', 'shipped', 'delivered', 'completed', 'cancelled', 'refunded']),
 })
 
 function generateOrderNo(): string {
@@ -231,6 +231,7 @@ export class OrderService {
       pending: 0,
       paid: 0,
       shipped: 0,
+      delivered: 0,
       completed: 0,
       cancelled: 0,
       refunded: 0,
@@ -245,6 +246,7 @@ export class OrderService {
       pending: counts.pending,
       paid: counts.paid,
       shipped: counts.shipped,
+      delivered: counts.delivered,
       completed: counts.completed,
       cancelled: counts.cancelled,
       refunded: counts.refunded,
@@ -306,9 +308,15 @@ export class OrderService {
         await order.update({ status: 'shipped', shippedAt: new Date() })
         break
 
-      case 'completed':
+      case 'delivered':
         if (!isBuyer && !isAdmin) throw new Error('只有买家可以确认收货')
         if (order.status !== 'shipped') throw new Error('订单状态不正确')
+        await order.update({ status: 'delivered', deliveredAt: new Date() })
+        break
+
+      case 'completed':
+        if (!isBuyer && !isAdmin) throw new Error('只有买家可以完成订单')
+        if (order.status !== 'delivered') throw new Error('订单状态不正确')
         await order.update({ status: 'completed', completedAt: new Date() })
         await product.update({ status: 'sold' })
         break

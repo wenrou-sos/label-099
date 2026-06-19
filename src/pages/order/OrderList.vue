@@ -363,7 +363,7 @@ function goDetail(order: Order) {
                   </div>
 
                   <div class="text-right py-1 flex-shrink-0">
-                    <div class="price-tag text-xl mb-1">¥{{ order.amount }}</div>
+                    <div class="price-tag text-xl mb-1">¥{{ order.price }}</div>
                     <div class="text-caption text-ink-400">x1</div>
                   </div>
                 </div>

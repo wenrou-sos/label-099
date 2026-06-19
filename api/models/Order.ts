@@ -8,18 +8,19 @@ export interface OrderAttributes {
   buyerId: number
   sellerId: number
   price: number
-  status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled' | 'refunded'
+  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'completed' | 'cancelled' | 'refunded'
   address?: string
   phone?: string
   remark?: string
   paidAt?: Date
   shippedAt?: Date
+  deliveredAt?: Date
   completedAt?: Date
   createdAt?: Date
   updatedAt?: Date
 }
 
-export interface OrderCreationAttributes extends Optional<OrderAttributes, 'id' | 'address' | 'phone' | 'remark' | 'paidAt' | 'shippedAt' | 'completedAt' | 'createdAt' | 'updatedAt'> {}
+export interface OrderCreationAttributes extends Optional<OrderAttributes, 'id' | 'address' | 'phone' | 'remark' | 'paidAt' | 'shippedAt' | 'deliveredAt' | 'completedAt' | 'createdAt' | 'updatedAt'> {}
 
 class Order extends Model<OrderAttributes, OrderCreationAttributes> implements OrderAttributes {
   declare id: number
@@ -28,12 +29,13 @@ class Order extends Model<OrderAttributes, OrderCreationAttributes> implements O
   declare buyerId: number
   declare sellerId: number
   declare price: number
-  declare status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled' | 'refunded'
+  declare status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'completed' | 'cancelled' | 'refunded'
   declare address?: string
   declare phone?: string
   declare remark?: string
   declare paidAt?: Date
   declare shippedAt?: Date
+  declare deliveredAt?: Date
   declare completedAt?: Date
   declare readonly createdAt: Date
   declare readonly updatedAt: Date
@@ -80,7 +82,7 @@ Order.init(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM('pending', 'paid', 'shipped', 'completed', 'cancelled', 'refunded'),
+      type: DataTypes.ENUM('pending', 'paid', 'shipped', 'delivered', 'completed', 'cancelled', 'refunded'),
       allowNull: false,
       defaultValue: 'pending',
     },
@@ -101,6 +103,10 @@ Order.init(
       allowNull: true,
     },
     shippedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    deliveredAt: {
       type: DataTypes.DATE,
       allowNull: true,
     },

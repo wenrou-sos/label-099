@@ -22,7 +22,7 @@ export class ReviewService {
     if (order.buyerId !== fromUserId) {
       throw new Error('只有买家可以评价')
     }
-    if (order.status !== 'completed') {
+    if (order.status !== 'delivered' && order.status !== 'completed') {
       throw new Error('订单未完成，无法评价')
     }
 
@@ -42,6 +42,14 @@ export class ReviewService {
       productId: order.productId,
       images: validated.images as any,
     })
+
+    if (order.status === 'delivered') {
+      const product = await Product.findByPk(order.productId)
+      await order.update({ status: 'completed', completedAt: new Date() })
+      if (product) {
+        await product.update({ status: 'sold' })
+      }
+    }
 
     return review
   }

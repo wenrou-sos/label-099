@@ -62,7 +62,7 @@ export function shipOrder(id: number, data: { trackingNo: string }): Promise<Ord
 }
 
 export function receiveOrder(id: number): Promise<Order> {
-  return put(`/orders/${id}/status`, { status: 'completed' }).then(mapOrderStatus)
+  return put(`/orders/${id}/status`, { status: 'delivered' }).then(mapOrderStatus)
 }
 
 export function cancelOrder(id: number): Promise<Order> {
