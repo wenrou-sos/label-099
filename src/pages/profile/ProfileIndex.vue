@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useMessage } from 'naive-ui'
 import {
   Settings, ShoppingBag, ClipboardList, Star, FileEdit,
   HelpCircle, Heart, Footprints, Wallet, MapPin,
@@ -14,6 +15,7 @@ import type { User, Post, Product } from '@shared/types'
 
 const router = useRouter()
 const userStore = useUserStore()
+const message = useMessage()
 
 const loading = ref(true)
 const user = ref<User | null>(null)
@@ -56,7 +58,7 @@ const menuGroups: { icon: any; label: string; route?: string; badge?: number | s
   [
     { icon: Wallet, label: '我的钱包', badge: '¥528', color: 'from-green-400 to-emerald-500' },
     { icon: MapPin, label: '收货地址', color: 'from-orange-400 to-amber-500' },
-    { icon: Settings, label: '账号设置', color: 'from-slate-400 to-gray-500' },
+    { icon: Settings, label: '账号设置', route: '/profile/settings', color: 'from-slate-400 to-gray-500' },
     { icon: HelpCircle, label: '帮助中心', color: 'from-sky-400 to-blue-500' },
   ],
 ]
@@ -87,13 +89,19 @@ const fetchData = async () => {
   try {
     const [u, p] = await Promise.all([
       getProfile(),
-      getProductList({ page: 1, pageSize: 20 }).catch(() => ({ list: mockProducts })),
+      getProductList({ page: 1, pageSize: 20 }),
     ])
     user.value = u
-    recentProducts.value = (p as any)?.list?.slice(0, 3) || mockProducts
-  } catch {
-    user.value = userStore.userInfo || mockUser
-    recentProducts.value = mockProducts
+    recentProducts.value = (p as any)?.list?.slice(0, 3) || []
+  } catch (err: any) {
+    if (err?.response?.status === 401 || err?.message?.includes('登录')) {
+      userStore.clearAuth()
+      router.push('/login')
+    } else {
+      user.value = userStore.userInfo
+      recentProducts.value = []
+      message.error(err?.message || '加载失败')
+    }
   } finally {
     loading.value = false
   }

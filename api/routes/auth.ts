@@ -41,6 +41,10 @@ router.get('/me', authGuard, async (req: Request, res: Response) => {
   await handle(res, () => AuthService.getCurrentUser(req.user!.id))
 })
 
+router.get('/profile', authGuard, async (req: Request, res: Response) => {
+  await handle(res, () => AuthService.getCurrentUser(req.user!.id))
+})
+
 router.post('/logout', authGuard, async (req: Request, res: Response) => {
   res.json({ code: 0, data: true, message: '退出成功' })
 })

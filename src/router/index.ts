@@ -111,6 +111,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '我的评价', requireAuth: true },
   },
   {
+    path: '/profile/settings',
+    name: 'profile-settings',
+    component: () => import('@/pages/profile/ProfileSettings.vue'),
+    meta: { title: '账号设置', requireAuth: true },
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/pages/Login.vue'),

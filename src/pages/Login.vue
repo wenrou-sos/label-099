@@ -103,17 +103,8 @@ const handleLogin = async () => {
     message.success('登录成功！')
     const redirect = (route.query.redirect as string) || '/'
     setTimeout(() => router.push(redirect), 500)
-  } catch {
-    message.success('演示模式：登录成功！')
-    userStore.setToken('mock-token')
-    userStore.setUserInfo({
-      id: 1, username: 'mock_user', phone: phone.value,
-      nickname: nickname.value || '幸福宝妈',
-      creditScore: 930, isExpert: false, isTrusted: true,
-      createdAt: '', updatedAt: '',
-    })
-    const redirect = (route.query.redirect as string) || '/'
-    setTimeout(() => router.push(redirect), 500)
+  } catch (err: any) {
+    message.error(err?.message || '登录失败，请检查账号密码')
   } finally {
     submitting.value = false
   }
@@ -124,21 +115,17 @@ const handleRegister = async () => {
   submitting.value = true
   try {
     await userStore.register({
-      phone: phone.value, password: password.value,
-      username: nickname.value, smsCode: smsCode.value,
-    })
+      phone: phone.value,
+      password: password.value,
+      username: nickname.value || phone.value,
+      nickname: nickname.value || phone.value,
+      smsCode: smsCode.value,
+      email: `${phone.value || nickname.value}@momcircle.example`,
+    } as any)
     message.success('注册成功！欢迎加入~')
     setTimeout(() => router.push('/'), 500)
-  } catch {
-    message.success('演示模式：注册成功！')
-    userStore.setToken('mock-token')
-    userStore.setUserInfo({
-      id: 1, username: 'mock_user', phone: phone.value,
-      nickname: nickname.value, creditScore: 100,
-      isExpert: false, isTrusted: false,
-      createdAt: '', updatedAt: '',
-    })
-    setTimeout(() => router.push('/'), 500)
+  } catch (err: any) {
+    message.error(err?.message || '注册失败，请稍后重试')
   } finally {
     submitting.value = false
   }
