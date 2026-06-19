@@ -8,6 +8,7 @@ export interface User {
   creditScore: number
   isExpert: boolean
   isTrusted: boolean
+  role?: 'user' | 'expert' | 'moderator' | 'admin'
   createdAt: string
   updatedAt: string
 }
@@ -35,6 +36,7 @@ export interface Post {
   commentCount: number
   isLiked?: boolean
   isFavorited?: boolean
+  isEssence?: boolean
   createdAt: string
   updatedAt: string
 }

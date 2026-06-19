@@ -12,6 +12,9 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = computed(() => !!token.value)
   const isExpert = computed(() => userInfo.value?.isExpert ?? false)
   const isTrusted = computed(() => userInfo.value?.isTrusted ?? false)
+  const isAdmin = computed(() => userInfo.value?.role === 'admin')
+  const isModerator = computed(() => userInfo.value?.role === 'moderator')
+  const canManageEssence = computed(() => isAdmin.value || isModerator.value)
 
   function setToken(newToken: string) {
     token.value = newToken
@@ -75,6 +78,9 @@ export const useUserStore = defineStore('user', () => {
     isLoggedIn,
     isExpert,
     isTrusted,
+    isAdmin,
+    isModerator,
+    canManageEssence,
     login,
     register,
     logout,

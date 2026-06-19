@@ -9,7 +9,7 @@ export interface UserAttributes {
   nickname: string
   avatar?: string
   phone?: string
-  role: 'user' | 'expert' | 'admin'
+  role: 'user' | 'expert' | 'moderator' | 'admin'
   bio?: string
   points?: number
   level?: number
@@ -72,7 +72,7 @@ User.init(
       allowNull: true,
     },
     role: {
-      type: DataTypes.ENUM('user', 'expert', 'admin'),
+      type: DataTypes.ENUM('user', 'expert', 'moderator', 'admin'),
       allowNull: false,
       defaultValue: 'user',
     },

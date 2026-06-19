@@ -14,6 +14,7 @@ import {
   Plus,
   TrendingUp,
   Clock,
+  Star,
 } from 'lucide-vue-next'
 import PostCard from '@/components/community/PostCard.vue'
 import { getPostList } from '@/api/post'
@@ -35,7 +36,7 @@ const categories = [
 
 const activeCategory = ref<string>(route.query.category as string || '')
 const keyword = ref<string>(route.query.keyword as string || '')
-const sortBy = ref<'latest' | 'hot'>('latest')
+const sortBy = ref<'latest' | 'hot' | 'essence'>('latest')
 const posts = ref<Post[]>([])
 const loading = ref(true)
 const page = ref(1)
@@ -57,6 +58,7 @@ const fallbackPosts: Post[] = [
     viewCount: 12580,
     likeCount: 892,
     commentCount: 156,
+    isEssence: true,
     createdAt: '2024-01-15T10:30:00Z',
     updatedAt: '2024-01-15T10:30:00Z',
   },
@@ -87,6 +89,7 @@ const fallbackPosts: Post[] = [
     viewCount: 15600,
     likeCount: 1208,
     commentCount: 234,
+    isEssence: true,
     createdAt: '2024-01-13T09:45:00Z',
     updatedAt: '2024-01-13T09:45:00Z',
   },
@@ -121,9 +124,10 @@ const fallbackPosts: Post[] = [
   },
 ]
 
-const sortOptions = [
-  { label: '最新发布', value: 'latest' },
-  { label: '最热讨论', value: 'hot' },
+const sortTabs: { label: string; value: 'latest' | 'hot' | 'essence'; icon: any }[] = [
+  { label: '最新', value: 'latest', icon: Clock },
+  { label: '最热', value: 'hot', icon: TrendingUp },
+  { label: '精华', value: 'essence', icon: Star },
 ]
 
 async function fetchPosts(reset = false) {
@@ -144,7 +148,7 @@ async function fetchPosts(reset = false) {
     }
     if (activeCategory.value) params.category = activeCategory.value
     if (keyword.value) params.keyword = keyword.value
-    if (sortBy.value === 'hot') params.orderBy = 'hot'
+    if (sortBy.value !== 'latest') params.sort = sortBy.value
 
     const res = await getPostList(params)
     if (res.list && res.list.length > 0) {
@@ -238,7 +242,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 搜索 + 排序 -->
+    <!-- 搜索 -->
     <div class="flex flex-col md:flex-row gap-3 mb-6 stagger">
       <div class="flex-1">
         <NInput
@@ -264,14 +268,24 @@ onUnmounted(() => {
           </template>
         </NInput>
       </div>
-      <NSelect
-        v-model:value="sortBy"
-        :options="sortOptions"
-        size="large"
-        round
-        class="w-full md:w-40"
-        @update:value="() => fetchPosts(true)"
-      />
+    </div>
+
+    <!-- 排序 Tabs -->
+    <div class="flex items-center gap-2 mb-6 stagger">
+      <button
+        v-for="tab in sortTabs"
+        :key="tab.value"
+        :class="[
+          'flex items-center gap-1.5 px-4 py-2 rounded-full text-caption md:text-body font-medium transition-all',
+          sortBy === tab.value
+            ? 'bg-gradient-primary text-white shadow-primary'
+            : 'bg-white text-ink-600 hover:bg-primary-50 hover:text-primary-500 card',
+        ]"
+        @click="sortBy = tab.value; fetchPosts(true)"
+      >
+        <component :is="tab.icon" class="w-4 h-4" />
+        {{ tab.label }}
+      </button>
     </div>
 
     <!-- 帖子列表 -->

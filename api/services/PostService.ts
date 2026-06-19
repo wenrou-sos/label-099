@@ -1,5 +1,6 @@
 import { Op } from 'sequelize'
 import { z } from 'zod'
+import { sequelize } from '../config/database.js'
 import { Post, Comment, User, Like, Favorite } from '../models/index.js'
 
 const createPostSchema = z.object({
@@ -41,12 +42,21 @@ export class PostService {
       where.userId = params.userId
     }
 
+    if (params.sort === 'essence') {
+      where.isEssence = true
+    }
+
     let order: any = [['createdAt', 'DESC']]
     if (params.sort === 'hot') {
       order = [
         ['isPinned', 'DESC'],
-        ['likeCount', 'DESC'],
+        [sequelize.literal('likeCount + commentCount'), 'DESC'],
         ['viewCount', 'DESC'],
+      ]
+    } else if (params.sort === 'essence') {
+      order = [
+        ['isPinned', 'DESC'],
+        ['createdAt', 'DESC'],
       ]
     } else {
       order = [
@@ -260,6 +270,22 @@ export class PostService {
       await comment.increment('likeCount')
       return { liked: true, likeCount: (comment.likeCount || 0) + 1 }
     }
+  }
+
+  static async toggleEssence(userId: number, postId: number, role?: string) {
+    if (role !== 'admin' && role !== 'moderator') {
+      throw new Error('无权限操作，仅管理员或版主可设置精华')
+    }
+
+    const post = await Post.findByPk(postId)
+    if (!post) {
+      throw new Error('帖子不存在')
+    }
+
+    const newValue = !post.isEssence
+    await post.update({ isEssence: newValue })
+
+    return { isEssence: newValue }
   }
 }
 

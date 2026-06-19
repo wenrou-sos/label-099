@@ -1,7 +1,7 @@
 import { get, post } from './http'
 import type { Post, Comment, ListResponse, PaginationParams, CreatePostParams } from '../../shared/types'
 
-export function getPostList(params: PaginationParams & { category?: string; keyword?: string; userId?: number }): Promise<ListResponse<Post>> {
+export function getPostList(params: PaginationParams & { category?: string; keyword?: string; userId?: number; sort?: 'latest' | 'hot' | 'essence' }): Promise<ListResponse<Post>> {
   return get('/posts', params)
 }
 
@@ -27,4 +27,8 @@ export function getPostComments(postId: number, params: PaginationParams): Promi
 
 export function createComment(postId: number, data: { content: string; parentId?: number; replyTo?: number }): Promise<Comment> {
   return post(`/posts/${postId}/comments`, data)
+}
+
+export function setEssence(postId: number): Promise<{ isEssence: boolean }> {
+  return post(`/posts/${postId}/essence`)
 }

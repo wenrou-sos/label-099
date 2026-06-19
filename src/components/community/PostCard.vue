@@ -8,6 +8,7 @@ import {
   Bookmark,
   User,
   ShieldCheck,
+  Star,
 } from 'lucide-vue-next'
 import type { Post } from '../../../shared/types'
 import { likePost, favoritePost } from '@/api/post'
@@ -175,9 +176,13 @@ function getCategoryGradient(category: string) {
 
     <h3
       class="text-heading-4 font-semibold text-ink-900 mb-2 line-clamp-2
-             group-hover:text-primary-500 transition-colors"
+             group-hover:text-primary-500 transition-colors flex items-start gap-2"
     >
-      {{ post.title }}
+      <Star
+        v-if="post.isEssence"
+        class="w-5 h-5 text-amber-400 fill-amber-400 flex-shrink-0 mt-0.5"
+      />
+      <span>{{ post.title }}</span>
     </h3>
 
     <p

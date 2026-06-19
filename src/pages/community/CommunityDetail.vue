@@ -22,6 +22,7 @@ import {
   Send,
   Reply,
   ThumbsUp,
+  Star,
 } from 'lucide-vue-next'
 import {
   getPost,
@@ -29,6 +30,7 @@ import {
   createComment,
   likePost,
   favoritePost,
+  setEssence,
 } from '@/api/post'
 import type { Post, Comment } from '../../../shared/types'
 import { useUserStore } from '@/stores/user'
@@ -47,12 +49,15 @@ const submitting = ref(false)
 const replyTo = ref<{ commentId: number; username: string } | null>(null)
 const likeAnimating = ref(false)
 const favAnimating = ref(false)
+const essenceLoading = ref(false)
+const canManageEssence = computed(() => userStore.canManageEssence)
 
 const fallbackPost: Post = {
   id: 1,
   userId: 1,
   author: { id: 1, username: '小美妈', phone: '', creditScore: 98, isExpert: false, isTrusted: true, createdAt: '', updatedAt: '', nickname: '小美妈', bio: '家有6月龄萌宝，专注科学育儿', avatar: '' },
   title: '宝宝6个月辅食添加全攻略，新手妈妈必看！',
+  isEssence: true,
   content: `亲爱的宝妈们好呀！👋
 
 终于来写这篇辅食添加的全攻略了，宝宝现在已经顺利吃了一个月的辅食，从一开始的茫然到现在的得心应手，想把我的经验都分享给大家。
@@ -276,6 +281,20 @@ function handleReport() {
   message.info('举报功能开发中...')
 }
 
+async function handleEssence() {
+  if (!post.value) return
+  essenceLoading.value = true
+  try {
+    const res = await setEssence(post.value.id)
+    post.value.isEssence = res.isEssence
+    message.success(res.isEssence ? '已设为精华' : '已取消精华')
+  } catch (e: any) {
+    message.error(e?.message || '操作失败')
+  } finally {
+    essenceLoading.value = false
+  }
+}
+
 function startReply(comment: Comment) {
   if (!userStore.isLoggedIn) {
     router.push('/login')
@@ -392,8 +411,12 @@ onMounted(() => {
             </div>
           </div>
 
-          <h1 class="text-heading-2 md:text-heading-1 font-bold text-ink-900 mb-6 leading-tight">
-            {{ post.title }}
+          <h1 class="text-heading-2 md:text-heading-1 font-bold text-ink-900 mb-6 leading-tight flex items-start gap-3">
+            <Star
+              v-if="post.isEssence"
+              class="w-7 h-7 md:w-8 md:h-8 text-amber-400 fill-amber-400 flex-shrink-0 mt-1"
+            />
+            <span>{{ post.title }}</span>
           </h1>
 
           <!-- 作者信息 -->
@@ -521,6 +544,23 @@ onMounted(() => {
             </div>
 
             <div class="flex items-center gap-2">
+              <button
+                v-if="canManageEssence"
+                class="flex items-center gap-1.5 px-3 md:px-4 h-9 md:h-10 rounded-xl transition-all"
+                :class="post.isEssence
+                  ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                  : 'bg-ink-50 text-ink-500 hover:bg-amber-50 hover:text-amber-500'"
+                :loading="essenceLoading"
+                @click="handleEssence"
+              >
+                <Star
+                  class="w-4 h-4 md:w-5 md:h-5"
+                  :class="post.isEssence ? 'fill-amber-400' : ''"
+                />
+                <span class="text-caption md:text-body font-medium">
+                  {{ post.isEssence ? '取消精华' : '设为精华' }}
+                </span>
+              </button>
               <button
                 class="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-ink-50 text-ink-500
                        hover:bg-ink-100 hover:text-ink-700 flex items-center justify-center transition-all"

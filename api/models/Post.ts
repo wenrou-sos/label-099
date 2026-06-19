@@ -14,11 +14,12 @@ export interface PostAttributes {
   viewCount?: number
   isPinned?: boolean
   isHot?: boolean
+  isEssence?: boolean
   createdAt?: Date
   updatedAt?: Date
 }
 
-export interface PostCreationAttributes extends Optional<PostAttributes, 'id' | 'images' | 'likeCount' | 'commentCount' | 'favoriteCount' | 'viewCount' | 'isPinned' | 'isHot' | 'createdAt' | 'updatedAt'> {}
+export interface PostCreationAttributes extends Optional<PostAttributes, 'id' | 'images' | 'likeCount' | 'commentCount' | 'favoriteCount' | 'viewCount' | 'isPinned' | 'isHot' | 'isEssence' | 'createdAt' | 'updatedAt'> {}
 
 class Post extends Model<PostAttributes, PostCreationAttributes> implements PostAttributes {
   declare id: number
@@ -33,6 +34,7 @@ class Post extends Model<PostAttributes, PostCreationAttributes> implements Post
   declare viewCount?: number
   declare isPinned?: boolean
   declare isHot?: boolean
+  declare isEssence?: boolean
   declare readonly createdAt: Date
   declare readonly updatedAt: Date
 }
@@ -102,6 +104,11 @@ Post.init(
       defaultValue: false,
     },
     isHot: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    isEssence: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,

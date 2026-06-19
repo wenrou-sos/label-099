@@ -80,4 +80,10 @@ router.post('/comments/:commentId/like', authGuard, async (req: Request, res: Re
   await handle(res, () => PostService.toggleCommentLike(req.user!.id, Number(req.params.commentId)))
 })
 
+router.post('/:id/essence', authGuard, async (req: Request, res: Response) => {
+  await handle(res, () =>
+    PostService.toggleEssence(req.user!.id, Number(req.params.id), req.user!.role)
+  )
+})
+
 export default router
