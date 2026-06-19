@@ -55,6 +55,10 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
   await handle(res, () => UserService.getById(Number(req.params.id)))
 })
 
+router.get('/:id/stats', optionalAuth, async (req: Request, res: Response) => {
+  await handle(res, () => UserService.getSellerStats(Number(req.params.id)))
+})
+
 router.put('/profile', authGuard, async (req: Request, res: Response) => {
   await handle(res, () => UserService.updateProfile(req.user!.id, req.body))
 })

@@ -5,13 +5,15 @@ import { useMessage } from 'naive-ui'
 import {
   Settings, ShoppingBag, ClipboardList, Star, FileEdit,
   HelpCircle, Heart, Footprints, Wallet, MapPin,
-  ChevronRight, Award, Crown, Gem, Sparkles, Eye, Package
+  ChevronRight, Award, Crown, Gem, Sparkles, Eye, Package,
+  Calendar as CalendarIcon, CheckCircle2
 } from 'lucide-vue-next'
 import { useUserStore } from '@/stores/user'
 import { getProfile } from '@/api/auth'
 import { getPostList } from '@/api/post'
 import { getProductList } from '@/api/product'
-import type { User, Post, Product } from '@shared/types'
+import { getSellerStats } from '@/api/user'
+import type { User, Post, Product, SellerStats } from '@shared/types'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -21,26 +23,7 @@ const loading = ref(true)
 const user = ref<User | null>(null)
 const recentProducts = ref<Product[]>([])
 const recentOrders = ref<any[]>([])
-
-const mockUser: User = {
-  id: 1,
-  username: 'mom_li',
-  phone: '13800138000',
-  nickname: '幸福的小李妈妈',
-  avatar: '',
-  bio: '家有3岁男宝，爱分享爱生活',
-  creditScore: 930,
-  isExpert: false,
-  isTrusted: true,
-  createdAt: '2024-01-01',
-  updatedAt: '2024-06-01',
-}
-
-const mockProducts: Product[] = [
-  { id: 1, title: '9成新婴儿推车 高景观可坐可躺', images: [], price: 399, originalPrice: 1299, status: 'available' } as any,
-  { id: 2, title: '全新宝宝围栏 16+2片 送海洋球', images: [], price: 259, originalPrice: 599, status: 'available' } as any,
-  { id: 3, title: '费雪健身架 8成新 功能完好', images: [], price: 89, originalPrice: 299, status: 'reserved' } as any,
-]
+const sellerStats = ref<SellerStats | null>(null)
 
 const menuGroups: { icon: any; label: string; route?: string; badge?: number | string; color: string }[][] = [
   [
@@ -78,7 +61,11 @@ const levelInfo = computed(() => {
   }
 })
 
-const goodRate = 93
+const goodRate = computed(() => sellerStats.value?.totalReviews ? sellerStats.value.positiveRate : 0)
+const ringGoodRate = computed(() => sellerStats.value?.totalReviews ? sellerStats.value.positiveRate : 93)
+const totalOrders = computed(() => sellerStats.value?.completedOrders ?? 0)
+const registeredText = computed(() => sellerStats.value?.registeredText ?? '1天')
+const sellerIsNew = computed(() => sellerStats.value?.isNewSeller ?? false)
 
 const segments = computed(() => {
   return Array.from({ length: 10 }, (_, i) => (i + 1) * 10 <= levelInfo.value.progress)
@@ -93,6 +80,12 @@ const fetchData = async () => {
     ])
     user.value = u
     recentProducts.value = (p as any)?.list?.slice(0, 3) || []
+
+    try {
+      sellerStats.value = await getSellerStats(u.id)
+    } catch (_e) {
+      sellerStats.value = null
+    }
   } catch (err: any) {
     if (err?.response?.status === 401 || err?.message?.includes('登录')) {
       userStore.clearAuth()
@@ -146,7 +139,13 @@ onMounted(fetchData)
                 <span>·</span>
                 <span>👶 宝宝 3岁2个月</span>
                 <span>·</span>
-                <span>📅 加入 {{ 6 }} 个月</span>
+                <span>
+                  <CalendarIcon class="w-3.5 h-3.5 inline mr-0.5 -mt-0.5" />
+                  加入 {{ registeredText }}
+                </span>
+                <span v-if="sellerIsNew" class="px-2 py-0.5 rounded-full bg-amber-400 text-ink-900 font-bold shadow">
+                  <Sparkles class="w-3.5 h-3.5 inline mr-0.5 -mt-0.5" />新卖家
+                </span>
               </div>
               <p class="text-white/80 text-sm">{{ user?.bio }}</p>
             </div>
@@ -189,16 +188,18 @@ onMounted(fetchData)
               </div>
               <div class="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-ink-50">
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-ink-900">{{ 45 }}</div>
-                  <div class="text-caption text-ink-500 mt-0.5">总交易</div>
+                  <div class="text-2xl font-bold text-ink-900">{{ totalOrders }}</div>
+                  <div class="text-caption text-ink-500 mt-0.5">{{ sellerIsNew ? '暂无交易' : '成交笔数' }}</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-ink-900">{{ 23 }}</div>
-                  <div class="text-caption text-ink-500 mt-0.5">总发帖</div>
+                  <div class="text-2xl font-bold text-ink-900">{{ sellerStats?.totalReviews ?? 0 }}</div>
+                  <div class="text-caption text-ink-500 mt-0.5">累计评价</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-ink-900">{{ 128 }}</div>
-                  <div class="text-caption text-ink-500 mt-0.5">累计帮助</div>
+                  <div class="text-2xl font-bold text-ink-900">
+                    {{ sellerStats?.totalReviews ? `${goodRate}%` : '—' }}
+                  </div>
+                  <div class="text-caption text-ink-500 mt-0.5">好评率</div>
                 </div>
               </div>
             </div>
@@ -211,7 +212,7 @@ onMounted(fetchData)
                     cx="72" cy="72" r="60" fill="none"
                     stroke="url(#ringGradient)" stroke-width="12"
                     stroke-linecap="round"
-                    :stroke-dasharray="`${goodRate * 3.77} 377`"
+                    :stroke-dasharray="`${ringGoodRate * 3.77} 377`"
                     class="transition-all duration-1000"
                   />
                   <defs>
@@ -222,8 +223,29 @@ onMounted(fetchData)
                   </defs>
                 </svg>
                 <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <span class="text-3xl font-bold text-primary-500">{{ goodRate }}%</span>
+                  <span class="text-3xl font-bold text-primary-500">
+                    {{ sellerStats?.totalReviews ? `${goodRate}%` : '—' }}
+                  </span>
                   <span class="text-caption text-ink-500">好评率</span>
+                </div>
+              </div>
+              <div class="w-full space-y-1.5 mb-2">
+                <div v-if="!sellerIsNew" class="text-caption text-ink-600 flex justify-between">
+                  <span>累计成交</span>
+                  <span class="font-semibold text-primary-500 flex items-center gap-1">
+                    <CheckCircle2 class="w-3.5 h-3.5" />
+                    {{ totalOrders }} 单
+                  </span>
+                </div>
+                <div v-if="sellerStats && sellerStats.totalReviews" class="text-caption text-ink-600 flex justify-between">
+                  <span>好评 / 总评价</span>
+                  <span class="font-semibold text-primary-500">
+                    {{ sellerStats.goodReviews }} / {{ sellerStats.totalReviews }}
+                  </span>
+                </div>
+                <div class="text-caption text-ink-600 flex justify-between">
+                  <span>注册时长</span>
+                  <span class="font-semibold text-primary-500">{{ registeredText }}</span>
                 </div>
               </div>
               <div class="w-full">

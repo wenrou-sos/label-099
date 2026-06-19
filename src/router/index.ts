@@ -123,6 +123,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '我的足迹', requireAuth: true },
   },
   {
+    path: '/users/:id',
+    name: 'user-home',
+    component: () => import('@/pages/users/UserHome.vue'),
+    meta: { title: '卖家主页', requireAuth: false },
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/pages/Login.vue'),

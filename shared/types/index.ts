@@ -129,15 +129,18 @@ export interface Order {
 export interface Review {
   id: number
   orderId: number
-  reviewerId: number
-  revieweeId: number
+  fromUserId: number
+  toUserId: number
   reviewer?: User
   reviewee?: User
+  productId?: number
   rating: number
-  content: string
+  content?: string
   images?: string[]
+  type: 'order' | 'consult'
   isPositive?: boolean
   createdAt: string
+  updatedAt: string
 }
 
 export interface Question {
@@ -316,4 +319,16 @@ export interface OrderStats {
   completed: number
   cancelled: number
   refunded: number
+}
+
+export interface SellerStats {
+  completedOrders: number
+  totalReviews: number
+  goodReviews: number
+  positiveRate: number
+  registeredDays: number
+  registeredMonths: number
+  registeredYears: number
+  registeredText: string
+  isNewSeller: boolean
 }

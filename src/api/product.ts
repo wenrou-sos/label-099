@@ -8,11 +8,17 @@ export function getProductList(
     keyword?: string
     minPrice?: number
     maxPrice?: number
+    sellerId?: number
     userId?: number
     status?: string
   }
 ): Promise<ListResponse<Product>> {
-  return get('/products', params)
+  const p: any = { ...params }
+  if (!p.sellerId && p.userId) {
+    p.sellerId = p.userId
+    delete p.userId
+  }
+  return get('/products', p)
 }
 
 export function getProduct(id: number): Promise<Product> {

@@ -1,7 +1,7 @@
 import { Op } from 'sequelize'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
-import { User, Expert, Post, Product, Order } from '../models/index.js'
+import { User, Expert, Post, Product, Order, Review } from '../models/index.js'
 
 const updateProfileSchema = z.object({
   nickname: z.string().min(1).max(50).optional(),
@@ -51,6 +51,71 @@ export class UserService {
       total: count,
       page,
       pageSize,
+    }
+  }
+
+  static async getSellerStats(sellerId: number) {
+    const user = await User.findByPk(sellerId, {
+      attributes: ['id', 'createdAt'],
+    })
+    if (!user) {
+      throw new Error('用户不存在')
+    }
+
+    const completedOrders = await Order.count({
+      where: { sellerId, status: 'completed' },
+    })
+
+    const totalReviews = await Review.count({
+      where: { toUserId: sellerId, type: 'order' },
+    })
+
+    const goodReviews = totalReviews > 0
+      ? await Review.count({
+          where: {
+            toUserId: sellerId,
+            type: 'order',
+            rating: { [Op.gte]: 4 },
+          },
+        })
+      : 0
+
+    const positiveRate = totalReviews > 0
+      ? Number(((goodReviews / totalReviews) * 100).toFixed(1))
+      : 0
+
+    const registeredDays = Math.max(
+      1,
+      Math.floor((Date.now() - new Date(user.createdAt!).getTime()) / (1000 * 60 * 60 * 24))
+    )
+    const registeredMonths = Math.floor(registeredDays / 30)
+    const registeredYears = Math.floor(registeredDays / 365)
+
+    let registeredText: string
+    if (registeredYears > 0) {
+      const remainMonths = registeredMonths - registeredYears * 12
+      registeredText = remainMonths > 0
+        ? `${registeredYears}年${remainMonths}个月`
+        : `${registeredYears}年`
+    } else if (registeredMonths > 0) {
+      const remainDays = registeredDays - registeredMonths * 30
+      registeredText = remainDays > 0
+        ? `${registeredMonths}个月${remainDays}天`
+        : `${registeredMonths}个月`
+    } else {
+      registeredText = `${registeredDays}天`
+    }
+
+    return {
+      completedOrders,
+      totalReviews,
+      goodReviews,
+      positiveRate,
+      registeredDays,
+      registeredMonths,
+      registeredYears,
+      registeredText,
+      isNewSeller: completedOrders === 0,
     }
   }
 

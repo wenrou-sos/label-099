@@ -22,12 +22,16 @@ import {
   ShieldCheck,
   ChevronDown,
   ChevronUp,
+  Store,
+  Handshake,
+  Calendar,
 } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import { getProduct, favoriteProduct, createProduct } from '@/api/product'
 import { createOrder } from '@/api/order'
 import { addFootprint } from '@/api/footprint'
-import type { Product, ProductCategory, ProductCondition } from '../../../shared/types'
+import { getSellerStats } from '@/api/user'
+import type { Product, ProductCategory, ProductCondition, SellerStats } from '@shared/types'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
@@ -42,6 +46,8 @@ const favoriteLoading = ref(false)
 const descExpanded = ref(false)
 const buyingLoading = ref(false)
 const currentTab = ref('detail')
+const sellerStats = ref<SellerStats | null>(null)
+const statsLoading = ref(false)
 
 const categoryEmojiMap: Record<ProductCategory | string, { emoji: string; gradient: string }> = {
   baby_clothes: { emoji: '👕', gradient: 'from-pink-200 to-rose-300' },
@@ -99,14 +105,15 @@ const creditLevel = computed(() => {
   return Math.min(Math.floor(score / 20) + 1, 5)
 })
 
-const reviewCount = computed(() => {
-  return product.value?.seller?.creditScore ? Math.floor(product.value.seller.creditScore / 10) : 12
+const realPositiveRate = computed(() => {
+  if (!sellerStats.value) return 95
+  if (sellerStats.value.totalReviews === 0) return 0
+  return sellerStats.value.positiveRate
 })
 
-const positiveRate = computed(() => {
-  const score = product.value?.seller?.creditScore ?? 80
-  return Math.min(99, 70 + score / 5)
-})
+const sellerCompletedOrders = computed(() => sellerStats.value?.completedOrders ?? 0)
+const sellerRegisteredText = computed(() => sellerStats.value?.registeredText ?? '1天')
+const sellerIsNew = computed(() => sellerStats.value?.isNewSeller ?? true)
 
 async function fetchProduct() {
   loading.value = true
@@ -116,6 +123,18 @@ async function fetchProduct() {
     favorited.value = product.value.isFavorited ?? false
     if (userStore.isLoggedIn && product.value) {
       addFootprint(product.value.id).catch(() => {})
+    }
+
+    if (product.value?.seller?.id || product.value?.userId) {
+      const sid = product.value.seller?.id ?? product.value.userId
+      statsLoading.value = true
+      try {
+        sellerStats.value = await getSellerStats(sid)
+      } catch (_e) {
+        sellerStats.value = null
+      } finally {
+        statsLoading.value = false
+      }
     }
   } catch (e: any) {
     message.error(e?.message || '加载商品失败')
@@ -166,6 +185,11 @@ function handleWant() {
   }
   handleFavorite()
   message.info('已关注，卖家可能会联系你哦～')
+}
+
+function goSellerHome() {
+  const sid = product.value?.seller?.id || product.value?.userId
+  if (sid) router.push(`/users/${sid}`)
 }
 
 onMounted(fetchProduct)
@@ -333,8 +357,10 @@ onMounted(fetchProduct)
                   <div class="p-6 space-y-4">
                     <div class="flex items-center gap-6 p-4 rounded-xl bg-ink-50">
                       <div class="text-center">
-                        <div class="text-3xl font-bold text-primary-500">{{ positiveRate.toFixed(1) }}%</div>
-                        <div class="text-caption text-ink-500 mt-1">好评率</div>
+                        <div class="text-3xl font-bold text-primary-500">
+                          {{ sellerIsNew || realPositiveRate === 0 ? '—' : `${realPositiveRate.toFixed(1)}%` }}
+                        </div>
+                        <div class="text-caption text-ink-500 mt-1">{{ sellerIsNew ? '暂无评价' : '好评率' }}</div>
                       </div>
                       <div class="flex-1 space-y-1">
                         <div class="flex items-center gap-2">
@@ -417,37 +443,47 @@ onMounted(fetchProduct)
             </div>
 
             <div class="card p-6">
-              <div class="flex items-center gap-4 mb-5">
+              <div class="flex items-center gap-4 mb-5 cursor-pointer group" @click="goSellerHome">
                 <NAvatar round :size="60" :src="product.seller?.avatar">
                   {{ product.seller?.nickname?.charAt(0) || product.seller?.username?.charAt(0) || '用' }}
                 </NAvatar>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-heading-4 text-ink-900 truncate">
+                    <span class="text-heading-4 text-ink-900 truncate group-hover:text-primary-500 transition-colors">
                       {{ product.seller?.nickname || product.seller?.username }}
                     </span>
+                    <ChevronRight class="w-4 h-4 text-ink-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                     <span v-if="product.seller?.isTrusted" class="trusted-badge shrink-0">诚信宝妈</span>
                   </div>
                   <div class="flex items-center gap-2 text-caption text-ink-500">
                     <span class="text-amber-500 font-bold">⭐️Lv{{ creditLevel }}</span>
                     <span>·</span>
-                    <span>好评率 {{ positiveRate.toFixed(0) }}%</span>
+                    <span>{{ sellerIsNew ? '新卖家' : `好评率 ${realPositiveRate.toFixed(0)}%` }}</span>
                   </div>
                 </div>
               </div>
 
               <div class="grid grid-cols-3 gap-2 mb-5">
                 <div class="text-center p-3 rounded-xl bg-primary-50">
-                  <div class="text-heading-3 text-primary-600">{{ reviewCount }}</div>
+                  <div class="w-6 h-6 mx-auto mb-1 text-primary-500">
+                    <Handshake class="w-5 h-5" />
+                  </div>
+                  <div class="text-heading-3 text-primary-600">{{ sellerIsNew ? 0 : (sellerStats?.goodReviews ?? 0) }}</div>
                   <div class="text-caption text-ink-500 mt-0.5">好评</div>
                 </div>
                 <div class="text-center p-3 rounded-xl bg-mint-50">
-                  <div class="text-heading-3 text-mint-700">28</div>
+                  <div class="w-6 h-6 mx-auto mb-1 text-mint-700">
+                    <Store class="w-5 h-5" />
+                  </div>
+                  <div class="text-heading-3 text-mint-700">{{ 28 }}</div>
                   <div class="text-caption text-ink-500 mt-0.5">在售</div>
                 </div>
                 <div class="text-center p-3 rounded-xl bg-lavender-50">
-                  <div class="text-heading-3 text-lavender-700">156</div>
-                  <div class="text-caption text-ink-500 mt-0.5">成交</div>
+                  <div class="w-6 h-6 mx-auto mb-1 text-lavender-700">
+                    <CheckCircle2 class="w-5 h-5" />
+                  </div>
+                  <div class="text-heading-3 text-lavender-700">{{ sellerCompletedOrders }}</div>
+                  <div class="text-caption text-ink-500 mt-0.5">{{ sellerIsNew ? '新卖家' : '成交' }}</div>
                 </div>
               </div>
 
@@ -457,17 +493,28 @@ onMounted(fetchProduct)
                     <circle cx="18" cy="18" r="15.9" fill="none" stroke="#DFE6E9" stroke-width="3" />
                     <circle
                       cx="18" cy="18" r="15.9" fill="none" stroke="#FF6B8A" stroke-width="3"
-                      :stroke-dasharray="`${positiveRate}, 100`"
+                      :stroke-dasharray="`${sellerIsNew ? 0 : realPositiveRate}, 100`"
                       stroke-linecap="round"
                     />
                   </svg>
                   <div class="absolute inset-0 flex items-center justify-center text-caption font-bold text-primary-600">
-                    {{ positiveRate.toFixed(0) }}%
+                    {{ sellerIsNew ? '—' : `${realPositiveRate.toFixed(0)}%` }}
                   </div>
                 </div>
-                <div class="flex-1">
-                  <div class="text-body font-medium text-ink-900">卖家信誉良好</div>
-                  <div class="text-caption text-ink-500">近30天成交 {{ reviewCount }} 单，无差评</div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-body font-medium text-ink-900">
+                    {{ sellerIsNew ? '暂无交易记录' : '卖家信誉良好' }}
+                  </div>
+                  <div class="text-caption text-ink-500 truncate">
+                    <span>
+                      <Calendar class="w-3 h-3 inline-block mr-0.5 -mt-0.5" />
+                      注册 {{ sellerRegisteredText }}
+                    </span>
+                    <template v-if="!sellerIsNew">
+                      <span class="mx-1">·</span>
+                      <span>累计成交 {{ sellerCompletedOrders }} 单</span>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
