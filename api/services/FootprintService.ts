@@ -15,10 +15,9 @@ export class FootprintService {
     })
 
     if (existing) {
-      await existing.update({ createdAt: new Date() })
-    } else {
-      await Footprint.create({ userId, productId })
+      await existing.destroy()
     }
+    await Footprint.create({ userId, productId })
 
     const count = await Footprint.count({ where: { userId } })
     if (count > MAX_FOOTPRINTS) {
